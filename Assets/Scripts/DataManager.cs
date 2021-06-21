@@ -1,25 +1,27 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 
 public class DataManager : MonoBehaviour
 {
-    [System.Serializable]
-    class SaveData
-    {
-        public string bestPlayerName;
-        public int bestScore;
-    }
+    private string path;
 
     public static DataManager Instance;
-    public string currentPlayerName;
-    public string bestPlayerName;
-    public int bestScore;
-    public int currentScore;
+
+    public DataPlayerList highscoreEntryList;
+
+    public DataPlayer currentPlayer;
 
     private void Awake()
     {
+        path = Application.persistentDataPath + "/savefile.json";
+        LoadScore();
+        if (highscoreEntryList == null)
+        {
+            highscoreEntryList = new DataPlayerList();
+            highscoreEntryList.allPlayer = new List<DataPlayer>();
+        }
+        orderHighscoreEntryList();
         if (Instance != null)
         {
             Destroy(gameObject);
@@ -27,35 +29,48 @@ public class DataManager : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        LoadScore();
+    }
+
+    public int SortByScore(DataPlayer p1, DataPlayer p2)
+    {
+        return p2.score.CompareTo(p1.score);
+    }
+
+    public void orderHighscoreEntryList()
+    {
+        highscoreEntryList.allPlayer.Sort(SortByScore);
     }
 
     public void SaveScore()
     {
-        if(currentScore > bestScore)
-        {
-            SaveData data = new SaveData();
-            data.bestPlayerName = currentPlayerName;
-            data.bestScore = currentScore;
-
-            string json = JsonUtility.ToJson(data);
-
-            File.WriteAllText(Application.persistentDataPath + "/savefile.json", json);
-        }
-        
+        highscoreEntryList.allPlayer.Add(currentPlayer);
+        string json = JsonUtility.ToJson(highscoreEntryList);
+        File.WriteAllText(path, json);
     }
 
     public void LoadScore()
     {
-        string path = Application.persistentDataPath + "/savefile.json";
         if (File.Exists(path))
         {
             string json = File.ReadAllText(path);
-            SaveData data = JsonUtility.FromJson<SaveData>(json);
-
-            bestPlayerName = data.bestPlayerName;
-            bestScore = data.bestScore;
+            DataPlayerList data = JsonUtility.FromJson<DataPlayerList>(json);
+            if(data != null)
+            {
+                highscoreEntryList = data;
+            }
+        }
+        else
+        {
+            Debug.Log("Save file not found in " + path);
         }
     }
 
+    //public void AllEntries()
+    //{
+    //    foreach (DataPlayer player in highscoreEntryList.allPlayer)
+    //    {
+    //        Debug.Log(player.score);
+    //        Debug.Log(player.name);
+    //    }
+    //}
 }
