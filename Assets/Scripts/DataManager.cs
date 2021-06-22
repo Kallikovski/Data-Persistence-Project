@@ -43,7 +43,22 @@ public class DataManager : MonoBehaviour
 
     public void SaveScore()
     {
-        highscoreEntryList.allPlayer.Add(currentPlayer);
+        bool newEntryNeeded = true;
+        for (int i = 0; i < highscoreEntryList.allPlayer.Count; i++)
+        {
+            if(highscoreEntryList.allPlayer[i].name == currentPlayer.name)
+            {
+                newEntryNeeded = false;
+                if (highscoreEntryList.allPlayer[i].score < currentPlayer.score)
+                {
+                    highscoreEntryList.allPlayer[i] = currentPlayer;
+                }
+            }
+        }
+        if(newEntryNeeded == true)
+        {
+            highscoreEntryList.allPlayer.Add(currentPlayer);
+        }
         string json = JsonUtility.ToJson(highscoreEntryList);
         File.WriteAllText(path, json);
     }
